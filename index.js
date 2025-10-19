@@ -23,7 +23,7 @@ async function ListarLaudos(placa) {
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
                 'Referer': 'http://denatran4.serpro.gov.br/siscsv/denatranportal2/Laudos/ListarLaudos.aspx',
                 'Accept-Language': 'pt-BR,pt;q=0.9',
-                'Cookie': 'ASP.NET_SessionId=xhl0e445hcmqghrcse0xxb55'
+                'Cookie': await GetCookie(),
             },
             body: new URLSearchParams({
                 'ctl00$ContentPlaceDefault$txtPlaca': placa,
@@ -66,11 +66,49 @@ async function ListarLaudos(placa) {
     }
 };
 
+const GetCookie = async () => {
+    const r = await fetch('http://denatran4.serpro.gov.br/siscsv/denatranportal2/logon.aspx');
+    const cookie = r.headers.get('set-cookie').split(' ')[0].replace(';', '');
+
+    const $ = cheerio.load(await r.text());
+
+    const __VIEWSTATE = $('#__VIEWSTATE').val();
+    const __EVENTVALIDATION = $('#__EVENTVALIDATION').val();
+
+    const send = await fetch('http://denatran4.serpro.gov.br/siscsv/denatranportal2/logon.aspx', {
+        method: 'POST',
+        headers: {
+            'Host': 'denatran4.serpro.gov.br',
+            'Cache-Control': 'max-age=0',
+            'Upgrade-Insecure-Requests': '1',
+            'Origin': 'http://denatran4.serpro.gov.br',
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 7.1.2; ASUS_Z01QD Build/QKQ1.190825.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/119.0.6045.193 Mobile Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'X-Requested-With': 'com.android.browser',
+            'Referer': 'http://denatran4.serpro.gov.br/siscsv/denatranportal2/logon.aspx',
+            'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Cookie': cookie
+        },
+        body: new URLSearchParams({
+            '__EVENTTARGET': '',
+            '__EVENTARGUMENT': '',
+            '__VIEWSTATE': '/wEPDwULLTIwMDEzNjMzMjFkZJELWSSC+wCQLY7R9raYzvFmsA+U',
+            '__VIEWSTATEGENERATOR': '557BC2AE',
+            '__EVENTVALIDATION': '/wEWBALfx6vMBAK4+7bYCALxiYiEAQKFhsjCCYq/8f1nrhS8aJBxO1Fp2yqdDJNd',
+            'txtCPF': '26935722829',
+            'txtSenha': 'fetchviado',
+            'aBt': 'Entrar'
+        })
+    });
+
+    return cookie;
+};
+
+
 
 app.get('/listarLaudos/:placa', async (req, res) => {
     return res.json(await ListarLaudos(req.params.placa));
 });
-
 
 async function CodigoLaudoAspx(codigoLaudo) {
 
@@ -86,7 +124,7 @@ async function CodigoLaudoAspx(codigoLaudo) {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
             'Referer': 'http://denatran4.serpro.gov.br/siscsv/denatranportal2/Laudos/ListarLaudos.aspx',
             'Accept-Language': 'pt-BR,pt;q=0.9',
-            'Cookie': 'ASP.NET_SessionId=xhl0e445hcmqghrcse0xxb55'
+            'Cookie': await GetCookie(),
         },
         body: new URLSearchParams({
             '__EVENTTARGET': '',
@@ -151,7 +189,7 @@ async function CodigoLaudoAspx(codigoLaudo) {
     const dados_veiculo = { nome_placa, marca_modelo, tipo_veiculo, ano_fabricacao, ano_modelo, cor, carrocaria, especie, capacidade_de_passageiros, combustivel, potencia, cilindradas, capacidade_de_carga, CMT, PBT, RENAVAM, data_e_hora, tipo_bin, chassi_texto, motor_texto, eixo, cambio, carroceria, categoria_veiculo, municipio, UF };
 
     const data = { dados_veiculo, fotos };
-    console.log(data);
+
     return data;
 };
 
